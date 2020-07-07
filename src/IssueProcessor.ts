@@ -115,9 +115,6 @@ export class IssueProcessor {
       );
 
       // calculate string based messages for this issue
-      const staleMessage: string = isPr
-        ? this.options.stalePrMessage
-        : this.options.staleIssueMessage;
       const staleLabel: string = isPr
         ? this.options.stalePrLabel
         : this.options.staleIssueLabel;
@@ -125,11 +122,6 @@ export class IssueProcessor {
         isPr ? this.options.exemptPrLabels : this.options.exemptIssueLabels
       );
       const issueType: string = isPr ? 'pr' : 'issue';
-
-      if (!staleMessage) {
-        core.info(`Skipping ${issueType} due to empty stale message`);
-        continue;
-      }
 
       if (issue.state === 'closed') {
         core.info(`Skipping ${issueType} because it is closed`);
@@ -152,21 +144,6 @@ export class IssueProcessor {
 
       // does this issue have a stale label?
       let isStale = IssueProcessor.isLabeled(issue, staleLabel);
-
-      // should this issue be marked stale?
-      const shouldBeStale = !IssueProcessor.updatedSince(
-        issue.updated_at,
-        this.options.daysBeforeStale
-      );
-
-      // determine if this issue needs to be marked stale first
-      if (!isStale && shouldBeStale) {
-        core.info(
-          `Marking ${issueType} stale because it was last updated on ${issue.updated_at} and it does not have a stale label`
-        );
-        await this.markStale(issue, staleMessage, staleLabel);
-        isStale = true; // this issue is now considered stale
-      }
 
       // process the issue if it was marked stale
       if (isStale) {
